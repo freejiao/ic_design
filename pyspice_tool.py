@@ -183,10 +183,20 @@ def getResu(meas_file, resu_name):
             data = getResuSeed(meas_file, -2, 1)
         if resu_name == 'cddn':  # 后面如果要优化N管负载的偏置电压，直接取出即可
             data = getResuSeed(meas_file, -2, 2)
+        if resu_name == 'id_tail':  # 后面如果要优化N管负载的偏置电压，直接取出即可
+            data = getResuSeed(meas_file, -2, 3)  # 求出尾管的当前电流
+        if resu_name == 'id_s1':  # 后面如果要优化N管负载的偏置电压，直接取出即可
+            data = getResuSeed(meas_file, -1, 0)  # 求出尾管的目标电流
+        if resu_name == 'gm_s2':  # 后面如果要优化N管负载的偏置电压，直接取出即可
+            data = getResuSeed(meas_file, -1, 1)  # 获取gm_s2来作为Rz的迭代起点
 
     if meas_file == 'stage2_pz.ma0':  # 读取最终电路的交流扫描结果
         if resu_name == 'pm':
             data = getResuSeed(meas_file, -2, 0)
+            if 0 > data > -180:  # 说明是正常的相位裕度
+                data = 180 + data
+            else:  # 说明超了，直接给个-10
+                data = -10
         if resu_name == 'gbw':
             data = getResuSeed(meas_file, -2, 1)
         if resu_name == 'ac_gain':

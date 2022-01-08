@@ -23,10 +23,10 @@
 .PARAM gmid= 3.3
 .PARAM VMID= 1.1
 .PARAM FINGER= 115.0
-.PARAM RZ= 0.1
-
-
-
+.PARAM RZ= 142.8
+** 下面这两个参数用来计算尾电流源，初始状态直接被设为0.1和WT
+.PARAM RSW= 1000000000000.0
+.PARAM WT= 2.413e-05
 ** 下面的参数属于批量设置，不用于第二级扫描
 .PARAM LN= 1.655e-06
 .PARAM LP= 7.2e-07
@@ -35,7 +35,7 @@
 .PARAM VP= 0.3028
 
 **The copy of the parameter.
-
+.PARAM VGB= 0.7 **S1尾管栅极偏置
 
 .TEMP 25.0
 .OPTION
@@ -51,8 +51,8 @@ MN1 VM      VIN 	VP 		0 			n18 L=LN W=WN **这里的正负和单级的input.sp极性相反
 MN2 VO1 VIP 	VP 		0 			n18 L=LN W=WN
 MP1 VM 	 VM  AVDD	AVDD p18 L=LP  W=WP
 MP2 VO1 VM  AVDD	AVDD p18 L=LP  W=WP
-**CIMG1 VO1 VP 1e-12 ** 接一个1p的虚拟电容
-**CIMG2 VM VP 1e-12 ** 接一个1p的虚拟电容
+MB VP VGB 0 0 n18 L=180n W=WT
+VGB VGB 0 DC=VGB
 
 MP3 VOUT VO1 AVDD AVDD p18 m=FINGER L=LP2 W=WP2
 MN3 VOUT VBN 0 0 n18 m=FINGER L=LN2 W=WN2
@@ -71,8 +71,8 @@ MN4 VO3 VBN 0 0 n18 L=LNP W=WN2
 V0 AVDD 0 DC=SUPPLY
 V1 VCM 0 DC=VCMI
 V2 VIP VCM DC=0 AC=1 SIN(0 0.0002 1K)  ** VIP直接加一个AC=1的信号
-** V3 VIN_RES 0 DC=0 AC=0 SIN(0 0.0002 1K) **VIP不接了，通过一个AC=0的电阻到地
-V4 VP   0 DC=VP
+R3 VP VP_RSW RSW **这个电阻用来控制将尾电压直接接入或者是用电流源来做
+V4 VP_RSW   0 DC=VP
 V5 VBN 0 DC=0.8 **N管负载的偏置电压暂定700mV
 V6 VO3 0 DC=VCMO **这是一个虚拟节点，设置为VCM0用来算P管的尺寸和N管的尺寸
 V7 VMID 0 DC=VMID **这也是一个虚拟节点，在设计第一级之前，接在第二级的输入端，直接评估当前gain和cmil
@@ -99,6 +99,9 @@ V7 VMID 0 DC=VMID **这也是一个虚拟节点，在设计第一级之前，接在第二级的输入端，直
 .MEAS DC CL1   find par('abs(lx34(MP4))+abs(lx22(MP4)) ') at LP2 **Cds Cdb
 .MEAS DC ccx find par('abs(lx19(MP4))') at LP2 **获取cgd作为cmil的补充
 .MEAS DC CL2 find par('abs(lx33(MN4))') at LN2
+.MEAS DC id_tail find par('lx4(MB)') at LNP0 **求解尾管电流
+.MEAS DC id_s1 find par('2*lx4(MN2)') at LNP0 **求解尾管电流
+.MEAS DC gm_s2 find par('lx7(MP3)') at LNP0
 
 .MEAS AC PHASEMARGIN FIND VP(VOUT) WHEN VDB(VOUT)=0
 .MEAS AC GBW WHEN VDB(VOUT)=0
@@ -109,8 +112,8 @@ V7 VMID 0 DC=VMID **这也是一个虚拟节点，在设计第一级之前，接在第二级的输入端，直
 **.MEAS DC NroutidX find par('lx4(MN4)/lx8(MN4)') at LN2
 **.MEAS DC idpx find par('lx4(MP4)') at LP2
 **.MEAS DC idnx find par('lx4(MN4)') at LN2
-.MEAS DC vo2 find V(VOUT) at LNP0
-.MEAS DC vo1 find V(VO1) at LNP0
+**.MEAS DC vo2 find V(VOUT) at LNP0
+**.MEAS DC vo1 find V(VO1) at LNP0
 **.MEAS DC gm_mp3 find par('lx7(MP3)') at LP2
 **.MEAS DC gm_mp4 find par('lx7(MP4)') at LP2
 **.MEAS DC gm_mn2 find par('lx7(MN2)') at LP2
